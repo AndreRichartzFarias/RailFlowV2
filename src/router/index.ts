@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import AlertView from '../views/AlertsBoardView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import InsertAlertView from '../views/InsertAlertView.vue'
 
 
 const router = createRouter({
@@ -27,6 +28,11 @@ const router = createRouter({
     path: '/register',
     name: 'register',
     component: RegisterView,
+  },
+  {
+path: '/insertalert',
+name: 'insertalert',
+component: InsertAlertView,
   },
   ],
 })

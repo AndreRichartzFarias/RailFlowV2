@@ -1,57 +1,69 @@
 <script>
-import { useAuthStore } from '../stores/auth'
+import { getCSRFToken } from '../stores/auth'
 
 export default {
-  setup() {
-    const authStore = useAuthStore()
-    return {
-      authStore
-    }
-  },
   data() {
     return {
-      email: "",
-      password: "",
-      error: ""
+      email: '',
+      password: '',
+      error: '',
+      success: ''
     }
   },
   methods: {
-    async login() {
-      await this.authStore.login(this.email, this.password, this.$router)
-      if (!this.authStore.isAuthenticated) {
-        this.error = 'Login failed. Please check your credentials.'
+    async register() {
+      try {
+        const response = await fetch('http://localhost:8000/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+          },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.password
+          }),
+          credentials: 'include'
+        })
+        const data = await response.json()
+        if (response.ok) {
+          this.success = 'Registration successful! Please log in.'
+          setTimeout(() => {
+            this.$router.push('/login')
+          }, 1000)
+        } else {
+          this.error = data.error || 'Registration failed'
+        }
+      } catch (err) {
+        this.error = 'An error occurred during registration: ' + err
       }
-    },
-    resetError() {
-      this.error = ""
     }
   }
 }
 </script>
 
+
 <template>
-  <div class="login">
-    <h1>Login</h1>
-    <form @submit.prevent="login">
+  <div class="register">
+    <h2>Register</h2>
+    <form @submit.prevent="register">
       <div>
         <label for="email">Email:</label>
-        <input v-model="email" id="email" type="text" required @input="resetError">
+        <input v-model="email" id="email" type="email" required>
       </div>
       <div>
         <label for="password">Password:</label>
-        <input v-model="password" id="password" type="password" required @input="resetError">
+        <input v-model="password" id="password" type="password" required>
       </div>
-      <button type="submit">Login</button>
+      <button type="submit">Register</button>
     </form>
-    <p v-if="error" class="error">{{ error }}</p>
-         <div class="right">
-        <RouterLink to="/register" class="nav-item">REGISTER</RouterLink>
-    </div>
+    <p v-if="error">{{ error }}</p>
+    <p v-if="success">{{ success }}</p>
   </div>
 </template>
 
 <style scoped>
-.login {
+.register {
   max-width: 350px;
   margin: 5vh auto 0 auto;
   padding: 2rem 2rem 1.5rem 2rem;
@@ -63,8 +75,8 @@ export default {
   gap: 1.5rem;
 }
 
-h1 {
-  font-size: 1.7rem;
+h2 {
+  font-size: 1.5rem;
   font-weight: 600;
   color: var(--neutral-text, #222);
   margin-bottom: 0.5rem;
@@ -84,7 +96,7 @@ label {
   display: block;
 }
 
-input[type="text"],
+input[type="email"],
 input[type="password"] {
   width: 100%;
   padding: 0.7rem 0.9rem;
@@ -129,33 +141,27 @@ button[type="submit"]:hover {
   text-align: center;
 }
 
-.right {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 0.5rem;
-}
-
-.nav-item {
-  color: #444;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 1rem;
-  transition: color 0.2s;
-}
-
-.nav-item:hover {
-  color: #111;
-  text-decoration: underline;
+.success {
+  color: #227d3b;
+  background: #eafbf2;
+  border-radius: 4px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.98rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
 }
 
 /* Responsive adjustments */
 @media (max-width: 500px) {
-  .login {
+  .register {
     max-width: 98vw;
     padding: 1.2rem 0.5rem;
   }
-  h1 {
+  h2 {
     font-size: 1.2rem;
   }
 }
 </style>
+
+
