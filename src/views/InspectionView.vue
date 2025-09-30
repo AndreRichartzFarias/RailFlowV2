@@ -1,29 +1,27 @@
 <script setup lang="ts">
-// filepath: c:\Users\andre_r_farias\Documents\Trabalhos\RailFlowV2\src\views\AlertsBoardView.vue
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import AlertCard from '../components/DelayAlertCard.vue'
 
-const allAlerts = ref<any[]>([])
+const allInspections = ref<any[]>([])
 const visibleCount = ref(10)
 const loading = ref(false)
 const error = ref('')
 const noMore = ref(false)
 
-async function fetchAlerts() {
+async function fetchInspections() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get(`http://localhost:8000/alertcards/`)
-    allAlerts.value = res.data.results || res.data
+    const res = await axios.get('http://localhost:8000/inspections/')
+    allInspections.value = res.data.results || res.data
   } catch (e) {
-    error.value = 'Erro ao carregar alertas.'
+    error.value = 'Erro ao carregar inspeções.'
   }
   loading.value = false
 }
 
 function loadMore() {
-  if (visibleCount.value >= allAlerts.value.length) {
+  if (visibleCount.value >= allInspections.value.length) {
     noMore.value = true
     setTimeout(() => {
       noMore.value = false
@@ -33,24 +31,25 @@ function loadMore() {
   visibleCount.value += 20
 }
 
-onMounted(fetchAlerts)
+onMounted(fetchInspections)
 </script>
 
 <template>
-  <div class="alerts-board">
-  
-    <h1>Alertas</h1>
+  <div class="inspections-board">
+    <h1>Inspeções</h1>
     <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="allAlerts.length === 0 && !loading">Nenhum alerta encontrado.</div>
+    <div v-if="allInspections.length === 0 && !loading">Nenhuma inspeção encontrada.</div>
     <div>
-      <AlertCard
-        v-for="(alert, idx) in allAlerts.slice(0, visibleCount)"
-        :key="alert.id || idx"
-        :title="alert.title"
-        :content="alert.content"
-        :created_at="alert.created_at"
-        :train="alert.train_number"
-      />
+      <div
+        v-for="(inspection, idx) in allInspections.slice(0, visibleCount)"
+        :key="inspection.id || idx"
+        class="inspection-card"
+      >
+        <h2>Trem: {{ inspection.train_number || inspection.train?.number || inspection.train }}</h2>
+        <p><strong>Motivo:</strong> {{ inspection.reason_description || inspection.reason?.description || inspection.reason }}</p>
+        <p><strong>Data:</strong> {{ inspection.date }}</p>
+        <p v-if="inspection.notes"><strong>Notas:</strong> {{ inspection.notes }}</p>
+      </div>
     </div>
     <button
       class="load-more"
@@ -62,7 +61,7 @@ onMounted(fetchAlerts)
 </template>
 
 <style scoped>
-.alerts-board {
+.inspections-board {
   max-width: 600px;
   margin: 5vh auto 0 auto;
   padding: 2rem 1rem 1.5rem 1rem;
@@ -80,6 +79,27 @@ h1 {
   color: var(--neutral-text, #222);
   margin-bottom: 0.5rem;
   text-align: center;
+}
+
+.inspection-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.04);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.inspection-card h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+
+}
+
+.inspection-card p {
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+  color: #222;
 }
 
 .load-more {

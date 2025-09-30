@@ -33,6 +33,8 @@ export default {
 </script>
  
 <template>
+    <div class="home-page">
+    <div><img src="\src\assets\img\train_mountains_aerial_view_148001_3840x2400.jpg" alt="" class="bgimg"></div>
   <h1>Welcome to the home page</h1>
   <div v-if="authStore.isAuthenticated">
     <p>Hi there {{ authStore.user?.username }}!</p>
@@ -42,4 +44,27 @@ export default {
   <p v-else>
     You are not logged in. <router-link to="/login">Login</router-link>
   </p>
+</div>
+
 </template>
+
+<style scoped>
+
+*{
+    color:aliceblue
+}
+
+.bgimg {
+  position: fixed;
+  top: 0vh;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+  opacity: 0.9; /* Optional: makes content easier to read */
+  pointer-events: none; /* Prevents interaction */
+}
+
+
+</style>

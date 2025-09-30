@@ -4,13 +4,21 @@ import Navbar from './components/Navbar.vue'
 </script>
 
 <template>
-<Navbar/>
+<Navbar :class="{ 'nav-home': $route.path === '/' }"/>
 <RouterView/>
   
 </template>
 
-<style scoped>
-body{
-  background-color: var(--gray-bg) 
+<style>
+body {
+  background-color: var(--gray-bg);
+}
+
+.nav-home .nav-item {
+  color: #f0f4fa !important;
+}
+
+.nav-home .nav-icon svg {
+  color:white;
 }
 </style>

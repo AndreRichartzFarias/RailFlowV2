@@ -1,15 +1,3 @@
-<!-- filepath: src/components/AlertCard.vue -->
-<template>
-  <div class="alert-card">
-    <h3 class="alert-title">{{ title }}</h3>
-    <p class="alert-content">{{ content }}</p>
-    <div class="alert-meta">
-      <span class="alert-train">Trem: {{ trainNumber }}</span>
-      <span class="alert-date">{{ formattedDate }}</span>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
 
@@ -30,6 +18,17 @@ const formattedDate = computed(() =>
   props.created_at ? new Date(props.created_at).toLocaleString() : ''
 )
 </script>
+
+<template>
+  <div class="alert-card">
+    <h3 class="alert-title">{{ title }}</h3>
+    <p class="alert-content">{{ content }}</p>
+    <div class="alert-meta">
+      <span class="alert-train">Trem: {{ trainNumber }}</span>
+      <span class="alert-date">{{ formattedDate }}</span>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .alert-card {

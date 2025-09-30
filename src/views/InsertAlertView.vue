@@ -1,5 +1,5 @@
 <script setup>
-import InsertAlertCard from '../components/InsertAlertCard.vue'
+import InsertAlertCard from '../components/DelayInsertAlertCard.vue'
 </script>
 
 <template>
