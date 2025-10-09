@@ -20,6 +20,15 @@ async function fetchMaintenances() {
   loading.value = false
 }
 
+async function handleDelete(maintenanceId: number) {
+  try {
+    await axios.delete(`http://localhost:8000/maintenances/${maintenanceId}/`)
+    allMaintenances.value = allMaintenances.value.filter(m => m.id !== maintenanceId)
+  } catch (e) {
+    error.value = 'Erro ao excluir manutenção.'
+  }
+}
+
 function loadMore() {
   if (visibleCount.value >= allMaintenances.value.length) {
     noMore.value = true
@@ -45,6 +54,14 @@ onMounted(fetchMaintenances)
         :key="maintenance.id || idx"
         class="maintenance-card"
       >
+        <button
+          class="delete-btn"
+          type="button"
+          aria-label="Excluir manutenção"
+          @click="handleDelete(maintenance.id)"
+        >
+          &times;
+        </button>
         <h2>Trem: {{ maintenance.train_number || maintenance.train?.number || maintenance.train }}</h2>
         <p><strong>Motivo:</strong> {{ maintenance.reason_description || maintenance.reason?.description || maintenance.reason }}</p>
         <p><strong>Data:</strong> {{ maintenance.date }}</p>
@@ -82,11 +99,34 @@ h1 {
 }
 
 .maintenance-card {
-  background: #fff;
+  background: #f5f5f5;
   border-radius: 8px;
   box-shadow: 0 1px 8px 0 rgba(0,0,0,0.04);
   padding: 1rem 1.2rem;
   margin-bottom: 1rem;
+  position: relative;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  background: transparent;
+  border: none;
+  color: #b00020;
+  font-size: 1.4rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.1rem 0.5rem;
+  border-radius: 50%;
+  transition: background 0.15s;
+  z-index: 2;
+  line-height: 1;
+}
+.delete-btn:hover,
+.delete-btn:focus {
+  background: #fbeaec;
+  outline: none;
 }
 
 .maintenance-card h2 {

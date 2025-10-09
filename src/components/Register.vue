@@ -7,11 +7,14 @@ export default {
       email: '',
       password: '',
       error: '',
-      success: ''
+      success: '',
+      showPopup: false
     }
   },
   methods: {
     async register() {
+      this.error = ''
+      this.success = ''
       try {
         const response = await fetch('http://localhost:8000/api/register', {
           method: 'POST',
@@ -27,38 +30,49 @@ export default {
         })
         const data = await response.json()
         if (response.ok) {
-          this.success = 'Registration successful! Please log in.'
+          this.success = 'Cadastro realizado com sucesso! Faça login.'
+          this.showPopup = true
           setTimeout(() => {
+            this.showPopup = false
             this.$router.push('/login')
-          }, 1000)
+          }, 1500)
         } else {
-          this.error = data.error || 'Registration failed'
+          this.error = data.error || 'Falha no cadastro'
+          this.showPopup = true
+          setTimeout(() => {
+            this.showPopup = false
+          }, 2000)
         }
       } catch (err) {
-        this.error = 'An error occurred during registration: ' + err
+        this.error = 'Erro ao registrar: ' + err
+        this.showPopup = true
+        setTimeout(() => {
+          this.showPopup = false
+        }, 2000)
       }
     }
   }
 }
 </script>
 
-
 <template>
   <div class="register">
-    <h2>Register</h2>
+    <h2>Cadastro</h2>
     <form @submit.prevent="register">
       <div>
         <label for="email">Email:</label>
         <input v-model="email" id="email" type="email" required>
       </div>
       <div>
-        <label for="password">Password:</label>
+        <label for="password">Senha:</label>
         <input v-model="password" id="password" type="password" required>
       </div>
-      <button type="submit">Register</button>
+      <button type="submit">Cadastrar</button>
     </form>
-    <p v-if="error">{{ error }}</p>
-    <p v-if="success">{{ success }}</p>
+    <!-- Popup for error/success -->
+    <div v-if="showPopup" class="popup-message" :class="{ error: error, success: success }">
+      {{ error || success }}
+    </div>
   </div>
 </template>
 
@@ -130,29 +144,44 @@ button[type="submit"]:hover {
   background: #cccccc;
 }
 
-.error {
-  color: #b00020;
+.popup-message {
+  position: fixed;
+  left: 50%;
+  top: 8vh;
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: 90vw;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-align: center;
+  z-index: 1000;
+  box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+  background: #fff;
+  color: #222;
+  animation: fadeInOut 2s;
+}
+
+.popup-message.error {
   background: #fbeaec;
-  border-radius: 4px;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.98rem;
-  margin-top: -0.5rem;
-  margin-bottom: 0.5rem;
-  text-align: center;
+  color: #b00020;
+  border: 1px solid #b00020;
 }
 
-.success {
-  color: #227d3b;
+.popup-message.success {
   background: #eafbf2;
-  border-radius: 4px;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.98rem;
-  margin-top: -0.5rem;
-  margin-bottom: 0.5rem;
-  text-align: center;
+  color: #227d3b;
+  border: 1px solid #227d3b;
 }
 
-/* Responsive adjustments */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-20px);}
+  10% { opacity: 1; transform: translateX(-50%) translateY(0);}
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px);}
+}
+
 @media (max-width: 500px) {
   .register {
     max-width: 98vw;
@@ -161,7 +190,9 @@ button[type="submit"]:hover {
   h2 {
     font-size: 1.2rem;
   }
+  .popup-message {
+    font-size: 0.98rem;
+    padding: 0.7rem 1rem;
+  }
 }
 </style>
-
-

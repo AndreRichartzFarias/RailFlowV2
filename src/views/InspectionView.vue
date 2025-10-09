@@ -20,6 +20,15 @@ async function fetchInspections() {
   loading.value = false
 }
 
+async function handleDelete(inspectionId: number) {
+  try {
+    await axios.delete(`http://localhost:8000/inspections/${inspectionId}/`)
+    allInspections.value = allInspections.value.filter(i => i.id !== inspectionId)
+  } catch (e) {
+    error.value = 'Erro ao excluir inspeção.'
+  }
+}
+
 function loadMore() {
   if (visibleCount.value >= allInspections.value.length) {
     noMore.value = true
@@ -45,6 +54,14 @@ onMounted(fetchInspections)
         :key="inspection.id || idx"
         class="inspection-card"
       >
+        <button
+          class="delete-btn"
+          type="button"
+          aria-label="Excluir inspeção"
+          @click="handleDelete(inspection.id)"
+        >
+          &times;
+        </button>
         <h2>Trem: {{ inspection.train_number || inspection.train?.number || inspection.train }}</h2>
         <p><strong>Motivo:</strong> {{ inspection.reason_description || inspection.reason?.description || inspection.reason }}</p>
         <p><strong>Data:</strong> {{ inspection.date }}</p>
@@ -82,18 +99,40 @@ h1 {
 }
 
 .inspection-card {
-  background: #fff;
+  background: #f5f5f5;
   border-radius: 8px;
   box-shadow: 0 1px 8px 0 rgba(0,0,0,0.04);
   padding: 1rem 1.2rem;
   margin-bottom: 1rem;
+  position: relative;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  background: transparent;
+  border: none;
+  color: #b00020;
+  font-size: 1.4rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.1rem 0.5rem;
+  border-radius: 50%;
+  transition: background 0.15s;
+  z-index: 2;
+  line-height: 1;
+}
+.delete-btn:hover,
+.delete-btn:focus {
+  background: #fbeaec;
+  outline: none;
 }
 
 .inspection-card h2 {
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 0.4rem;
-
 }
 
 .inspection-card p {

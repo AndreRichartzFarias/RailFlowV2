@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// filepath: c:\Users\andre_r_farias\Documents\Trabalhos\RailFlowV2\src\views\AlertsBoardView.vue
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import AlertCard from '../components/DelayAlertCard.vue'
@@ -22,6 +21,15 @@ async function fetchAlerts() {
   loading.value = false
 }
 
+async function handleDelete(alertId: number) {
+  try {
+    await axios.delete(`http://localhost:8000/alertcards/${alertId}/`)
+    allAlerts.value = allAlerts.value.filter(a => a.id !== alertId)
+  } catch (e) {
+    error.value = 'Erro ao excluir alerta.'
+  }
+}
+
 function loadMore() {
   if (visibleCount.value >= allAlerts.value.length) {
     noMore.value = true
@@ -38,7 +46,6 @@ onMounted(fetchAlerts)
 
 <template>
   <div class="alerts-board">
-  
     <h1>Alertas</h1>
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="allAlerts.length === 0 && !loading">Nenhum alerta encontrado.</div>
@@ -50,6 +57,7 @@ onMounted(fetchAlerts)
         :content="alert.content"
         :created_at="alert.created_at"
         :train="alert.train_number"
+        :onDelete="() => handleDelete(alert.id)"
       />
     </div>
     <button

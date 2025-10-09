@@ -6,6 +6,7 @@ const props = defineProps<{
   content: string
   created_at: string
   train: { number?: string | number } | number | null
+  onDelete?: () => void // Optional callback for delete
 }>()
 
 const trainNumber = computed(() =>
@@ -21,6 +22,14 @@ const formattedDate = computed(() =>
 
 <template>
   <div class="alert-card">
+    <button
+      class="delete-btn"
+      type="button"
+      aria-label="Excluir alerta"
+      @click="props.onDelete && props.onDelete()"
+    >
+      &times;
+    </button>
     <h3 class="alert-title">{{ title }}</h3>
     <p class="alert-content">{{ content }}</p>
     <div class="alert-meta">
@@ -32,7 +41,7 @@ const formattedDate = computed(() =>
 
 <style scoped>
 .alert-card {
-  background: var(--gray-bg, #f7f7f7);
+  background: #f5f5f5;
   border-radius: 10px;
   box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
   padding: 1.2rem 1.5rem;
@@ -40,6 +49,29 @@ const formattedDate = computed(() =>
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  background: transparent;
+  border: none;
+  color: #b00020;
+  font-size: 1.4rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0.1rem 0.5rem;
+  border-radius: 50%;
+  transition: background 0.15s;
+  z-index: 2;
+  line-height: 1;
+}
+.delete-btn:hover,
+.delete-btn:focus {
+  background: #fbeaec;
+  outline: none;
 }
 
 .alert-title {
@@ -72,6 +104,12 @@ const formattedDate = computed(() =>
   }
   .alert-content {
     font-size: 0.96rem;
+  }
+  .delete-btn {
+    top: 0.4rem;
+    right: 0.4rem;
+    font-size: 1.2rem;
+    padding: 0.1rem 0.35rem;
   }
 }
 </style>
