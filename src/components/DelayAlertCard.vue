@@ -6,6 +6,7 @@ const props = defineProps<{
   content: string
   created_at: string
   train: { number?: string | number } | number | null
+  alert: string
   onDelete?: () => void // Optional callback for delete
 }>()
 
@@ -34,6 +35,7 @@ const formattedDate = computed(() =>
     <p class="alert-content">{{ content }}</p>
     <div class="alert-meta">
       <span class="alert-train">Trem: {{ trainNumber }}</span>
+      <span class="alert-alert">Categoria: {{ alert.message }}</span>
       <span class="alert-date">{{ formattedDate }}</span>
     </div>
   </div>

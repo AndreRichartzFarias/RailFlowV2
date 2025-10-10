@@ -9,7 +9,9 @@ import InspectionView from '../views/InspectionView.vue'
 import InsertInspectionView from '../views/InsertInspectionView.vue'
 import MaintenanceView from '../views/MaintenanceView.vue'
 import InsertMaintenanceView from '../views/InsertMaintenanceView.vue'
-
+import CompaniesView from '../views/CompaniesView.vue'
+import InsertComapanyView from '../views/InsertCompanyView.vue'
+import InsertOrderView from '../views/InsertOrderView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -69,6 +71,22 @@ component: InsertAlertView,
     component: InsertMaintenanceView,
 
   },
+  {
+    path:'/companies',
+    name: 'companies',
+    component: CompaniesView,
+  },
+   {
+    path:'/insertcompany',
+    name: 'insertcompany',
+    component: InsertComapanyView,
+  },
+  {
+    path:'/insertorder',
+    name: 'insertorder',
+    component: InsertOrderView,
+  },
+    
   ],
 })
 
