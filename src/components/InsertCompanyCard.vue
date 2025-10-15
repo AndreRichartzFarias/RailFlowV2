@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
-
+import { getCSRFToken } from '../stores/auth'
 const name = ref('')
 const cnpj = ref('')
 const phone = ref('')
@@ -20,11 +20,17 @@ async function submitCompany() {
     return
   }
   try {
-    await axios.post('http://localhost:8000/companies/', {
+    await axios.post('http://localhost:8000/api/companies/', {
       name: name.value,
       cnpj: cnpj.value,
       phone: phone.value || null,
       email: email.value || null
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      withCredentials: true
     })
     success.value = 'Empresa cadastrada com sucesso!'
     name.value = ''

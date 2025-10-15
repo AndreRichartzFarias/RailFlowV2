@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
+import { getCSRFToken } from '../stores/auth'
 const allInspections = ref<any[]>([])
 const visibleCount = ref(10)
 const loading = ref(false)
@@ -12,7 +12,7 @@ async function fetchInspections() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8000/inspections/')
+    const res = await axios.get('http://localhost:8000/api/inspections/',{ withCredentials: true })
     allInspections.value = res.data.results || res.data
   } catch (e) {
     error.value = 'Erro ao carregar inspeções.'
@@ -22,7 +22,12 @@ async function fetchInspections() {
 
 async function handleDelete(inspectionId: number) {
   try {
-    await axios.delete(`http://localhost:8000/inspections/${inspectionId}/`)
+   await axios.delete(`http://localhost:8000/api/inspections/${inspectionId}/`, {
+  withCredentials: true,
+  headers: {
+    'X-CSRFToken': getCSRFToken()
+  }
+})
     allInspections.value = allInspections.value.filter(i => i.id !== inspectionId)
   } catch (e) {
     error.value = 'Erro ao excluir inspeção.'

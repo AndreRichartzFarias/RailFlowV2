@@ -15,8 +15,8 @@ const success = ref('')
 async function fetchTrainsAndReasons() {
   try {
     const [trainsRes, reasonsRes] = await Promise.all([
-      axios.get('http://localhost:8000/trains/'),
-      axios.get('http://localhost:8000/reasonmaintenances/')
+      axios.get('http://localhost:8000/api/trains/',{ withCredentials: true }),
+      axios.get('http://localhost:8000/api/reasonmaintenances/',{ withCredentials: true })
     ])
     trains.value = trainsRes.data.results || trainsRes.data
     reasons.value = reasonsRes.data.results || reasonsRes.data

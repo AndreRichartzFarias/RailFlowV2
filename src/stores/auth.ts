@@ -4,6 +4,10 @@ import type { Router } from 'vue-router'
 interface User {
   id?: number
   email?: string
+  first_name?: string
+  last_name?: string
+  is_staff?: boolean
+  is_active?: boolean
   [key: string]: unknown
 }
 
@@ -43,6 +47,7 @@ export const useAuthStore = defineStore('auth', {
 
       const data: { success?: boolean } = await response.json()
       if (data.success) {
+        await this.fetchUser() // fetch user info after login
         this.isAuthenticated = true
         this.saveState()
         if (router) {
@@ -104,12 +109,6 @@ export const useAuthStore = defineStore('auth', {
     },
 
     saveState(): void {
-      /*
-        We save state to local storage to keep the
-        state when the user reloads the page.
-        This is a simple way to persist state.
-        For a more robust solution, use pinia-persistent-state.
-      */
       localStorage.setItem(
         'authState',
         JSON.stringify({
@@ -122,10 +121,6 @@ export const useAuthStore = defineStore('auth', {
 })
 
 export function getCSRFToken(): string {
-  /*
-    We get the CSRF token from the cookie to include in our requests.
-    This is necessary for CSRF protection in Django.
-  */
   const name = 'csrftoken'
   let cookieValue: string | null = null
   if (document.cookie && document.cookie !== '') {

@@ -62,7 +62,7 @@ async function fetchOrders() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8000/orders/')
+    const res = await axios.get('http://localhost:8000/api/orders/', { withCredentials: true })
     orders.value = res.data.results || res.data
   } catch (e) {
     error.value = 'Erro ao carregar pedidos.'

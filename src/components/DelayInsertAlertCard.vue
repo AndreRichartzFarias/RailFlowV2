@@ -14,8 +14,8 @@ const success = ref('')
 async function fetchTrainsAndAlerts() {
   try {
     const [trainsRes, alertsRes] = await Promise.all([
-      axios.get('http://localhost:8000/trains/'),
-      axios.get('http://localhost:8000/alerts/')
+      axios.get('http://localhost:8000/api/trains/', { withCredentials: true }),
+      axios.get('http://localhost:8000/api/alerts/', { withCredentials: true }),
     ])
     trains.value = trainsRes.data.results || trainsRes.data
     alerts.value = alertsRes.data.results || alertsRes.data
@@ -32,18 +32,18 @@ async function submitAlert() {
     return
   }
   try {
-    await axios.post('http://localhost:8000/alertcards/', {
-  title: title.value,
-  content: content.value,
-  train: train.value,
-  alert: alert.value
-}, {
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRFToken': getCSRFToken()
-  },
-  withCredentials: true
-})
+    await axios.post('http://localhost:8000/api/alertcards/', {
+      title: title.value,
+      content: content.value,
+      train: train.value,
+      alert: alert.value
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
+      withCredentials: true
+    })
     success.value = 'Alerta inserido com sucesso!'
     title.value = ''
     content.value = ''

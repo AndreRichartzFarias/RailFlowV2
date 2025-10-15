@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import AlertCard from '../components/DelayAlertCard.vue'
+import { getCSRFToken } from '../stores/auth'
 
 const allAlerts = ref<any[]>([])
 const visibleCount = ref(10)
@@ -17,9 +18,10 @@ async function fetchAlerts() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get(`http://localhost:8000/alertcards/`)
+    const res = await axios.get('http://localhost:8000/api/alertcards/', {
+      withCredentials: true
+    })
     allAlerts.value = (res.data.results || res.data).slice().reverse()
-    // Extract unique alert messages (categories)
     const categories = new Set(
       allAlerts.value
         .map(alert => alert.alert?.message)
@@ -31,10 +33,15 @@ async function fetchAlerts() {
   }
   loading.value = false
 }
-
 async function handleDelete(alertId: number) {
   try {
-    await axios.delete(`http://localhost:8000/alertcards/${alertId}/`)
+   await axios.delete(`http://localhost:8000/api/alertcards/${alertId}/`, {
+  withCredentials: true,
+  headers: {
+    'X-CSRFToken': getCSRFToken()
+  }
+})
+
     allAlerts.value = allAlerts.value.filter(a => a.id !== alertId)
     // Update categories after delete
     const categories = new Set(
