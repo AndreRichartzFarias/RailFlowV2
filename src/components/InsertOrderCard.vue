@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
+import { getCSRFToken } from '../stores/auth'
 const cargo_type = ref('')
 const weight = ref('')
 const origin = ref('')
@@ -21,9 +21,9 @@ const loading = ref(false)
 async function fetchOptions() {
   try {
     const [cargoRes, stationRes, companyRes] = await Promise.all([
-      axios.get('http://localhost:8000/cargotypes/'),
-      axios.get('http://localhost:8000/stations/'),
-      axios.get('http://localhost:8000/companies/')
+      axios.get('http://localhost:8000/api/cargotypes/', { withCredentials: true }),
+      axios.get('http://localhost:8000/api/stations/',{ withCredentials: true }),
+      axios.get('http://localhost:8000/api/companies/',{ withCredentials: true })
     ])
     cargoTypes.value = cargoRes.data.results || cargoRes.data
     stations.value = stationRes.data.results || stationRes.data
@@ -37,14 +37,13 @@ async function submitOrder() {
   error.value = ''
   success.value = ''
   loading.value = true
-  if (!order_number.value || !cargo_type.value || !weight.value || !origin.value || !destination.value || !departure_date.value || !arrival_date.value || !company.value) {
+  if (!cargo_type.value || !weight.value || !origin.value || !destination.value || !departure_date.value || !arrival_date.value || !company.value) {
     error.value = 'Preencha todos os campos obrigatórios.'
     loading.value = false
     return
   }
   try {
-    await axios.post('http://localhost:8000/orders/', {
-      order_number: order_number.value,
+    await axios.post('http://localhost:8000/api/orders/', {
       cargo_type: cargo_type.value,
       weight: weight.value,
       origin: origin.value,
@@ -52,9 +51,14 @@ async function submitOrder() {
       departure_date: departure_date.value,
       arrival_date: arrival_date.value,
       company: company.value
+    }, {
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken()
+      },
     })
     success.value = 'Pedido cadastrado com sucesso!'
-    order_number.value = ''
     cargo_type.value = ''
     weight.value = ''
     origin.value = ''
@@ -63,11 +67,7 @@ async function submitOrder() {
     arrival_date.value = ''
     company.value = ''
   } catch (e: any) {
-    if (e.response?.data?.order_number) {
-      error.value = 'Número de pedido já cadastrado.'
-    } else {
-      error.value = 'Erro ao cadastrar pedido.'
-    }
+    error.value = 'Erro ao cadastrar pedido.'
   }
   loading.value = false
 }
@@ -83,7 +83,7 @@ onMounted(fetchOptions)
         <label for="cargo_type">Tipo de Carga*</label>
         <select v-model="cargo_type" id="cargo_type" required>
           <option value="" disabled>Selecione</option>
-          <option v-for="c in cargoTypes" :key="c.id" :value="c.id">{{ c.name }}</option>
+          <option v-for="c in cargoTypes" :key="c.id" :value="c.id">{{ c.description }}</option>
         </select>
       </div>
       <div>

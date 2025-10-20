@@ -33,17 +33,18 @@ async function submitMaintenance() {
     return
   }
   try {
-    await axios.post('http://localhost:8000/maintenances/', {
+    await axios.post('http://localhost:8000/api/maintenances/', {
       train: train.value,
       reason: reason.value,
       date: date.value,
       notes: notes.value
     }, {
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCSRFToken()
       },
-      withCredentials: true
+      
     })
     success.value = 'Manutenção inserida com sucesso!'
     train.value = ''

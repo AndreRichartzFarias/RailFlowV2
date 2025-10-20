@@ -25,12 +25,13 @@ async function submitCompany() {
       cnpj: cnpj.value,
       phone: phone.value || null,
       email: email.value || null
-    }, {
+    },
+    {
+      withCredentials: true, 
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': getCSRFToken()
-      },
-      withCredentials: true
+      }
     })
     success.value = 'Empresa cadastrada com sucesso!'
     name.value = ''

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { getCSRFToken } from '@/stores/auth'
 
 const allMaintenances = ref<any[]>([])
 const visibleCount = ref(10)
@@ -12,8 +13,8 @@ async function fetchMaintenances() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8000/maintenances/')
-    allMaintenances.value = res.data.results || res.data
+    const res = await axios.get('http://localhost:8000/api/maintenances/', {withCredentials: true})
+    allMaintenances.value = (res.data.results || res.data).slice().reverse()
   } catch (e) {
     error.value = 'Erro ao carregar manutenções.'
   }
@@ -22,7 +23,14 @@ async function fetchMaintenances() {
 
 async function handleDelete(maintenanceId: number) {
   try {
-    await axios.delete(`http://localhost:8000/maintenances/${maintenanceId}/`)
+    await axios.delete(`http://localhost:8000/api/maintenances/${maintenanceId}/`, 
+    {
+      withCredentials: true,
+      headers: {
+        'X-CSRFToken': getCSRFToken()
+
+      }
+    })
     allMaintenances.value = allMaintenances.value.filter(m => m.id !== maintenanceId)
   } catch (e) {
     error.value = 'Erro ao excluir manutenção.'

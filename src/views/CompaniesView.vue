@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
+import { getCSRFToken } from '../stores/auth'
 const allCompanies = ref<any[]>([])
 const visibleCount = ref(10)
 const loading = ref(false)
@@ -12,8 +12,8 @@ async function fetchCompanies() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8000/companies/')
-    allCompanies.value = res.data.results || res.data
+    const res = await axios.get('http://localhost:8000/api/companies/', {withCredentials: true})
+    allCompanies.value = (res.data.results || res.data).slice().reverse()
   } catch (e) {
     error.value = 'Erro ao carregar empresas.'
   }
@@ -22,7 +22,13 @@ async function fetchCompanies() {
 
 async function handleDelete(companyId: number) {
   try {
-    await axios.delete(`http://localhost:8000/companies/${companyId}/`)
+    await axios.delete(`http://localhost:8000/api/companies/${companyId}/`, {
+      
+      withCredentials: true,
+      headers: {
+        'X-CSRFTOKEN': getCSRFToken(),
+      }
+    })
     allCompanies.value = allCompanies.value.filter(c => c.id !== companyId)
   } catch (e) {
     error.value = 'Erro ao excluir empresa.'

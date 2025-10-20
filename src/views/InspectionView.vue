@@ -13,7 +13,7 @@ async function fetchInspections() {
   error.value = ''
   try {
     const res = await axios.get('http://localhost:8000/api/inspections/',{ withCredentials: true })
-    allInspections.value = res.data.results || res.data
+    allInspections.value = (res.data.results || res.data).slice().reverse()
   } catch (e) {
     error.value = 'Erro ao carregar inspeções.'
   }
