@@ -33,14 +33,15 @@ async function fetchAlerts() {
   }
   loading.value = false
 }
+
 async function handleDelete(alertId: number) {
   try {
    await axios.delete(`http://localhost:8000/api/alertcards/${alertId}/`, {
-  withCredentials: true,
-  headers: {
-    'X-CSRFToken': getCSRFToken()
-  }
-})
+    withCredentials: true,
+    headers: {
+      'X-CSRFToken': getCSRFToken()
+    }
+  })
 
     allAlerts.value = allAlerts.value.filter(a => a.id !== alertId)
     // Update categories after delete
@@ -74,6 +75,18 @@ const filteredAlerts = computed(() =>
   )
 )
 
+// handle update emitted from card component
+function onCardUpdated(updated: any) {
+  allAlerts.value = allAlerts.value.map(a => a.id === updated.id ? { ...a, ...updated } : a)
+  // recompute categories in case alert.category changed (optional)
+  const categories = new Set(
+    allAlerts.value
+      .map(alert => alert.alert?.message)
+      .filter(Boolean)
+  )
+  alertCategories.value = Array.from(categories)
+}
+
 onMounted(fetchAlerts)
 </script>
 
@@ -102,12 +115,15 @@ onMounted(fetchAlerts)
       <AlertCard
         v-for="(alert, idx) in filteredAlerts.slice(0, visibleCount)"
         :key="alert.id || idx"
+        :card-id="alert.id"
         :title="alert.title"
         :content="alert.content"
         :created_at="alert.created_at"
         :train="alert.train_number"
         :alert="alert.alert"
         :onDelete="() => handleDelete(alert.id)"
+        @updated="onCardUpdated"
+        @error="msg => error = msg"
       />
     </div>
     <button
