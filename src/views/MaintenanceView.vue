@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { getCSRFToken } from '@/stores/auth'
+import MaintenanceCard from '@/components/MaintenanceCard.vue'
 
 const allMaintenances = ref<any[]>([])
 const visibleCount = ref(10)
@@ -13,23 +14,20 @@ async function fetchMaintenances() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8000/api/maintenances/', {withCredentials: true})
+    const res = await axios.get('http://localhost:8000/api/maintenances/', { withCredentials: true })
     allMaintenances.value = (res.data.results || res.data).slice().reverse()
   } catch (e) {
     error.value = 'Erro ao carregar manutenções.'
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
 async function handleDelete(maintenanceId: number) {
   try {
-    await axios.delete(`http://localhost:8000/api/maintenances/${maintenanceId}/`, 
-    {
+    await axios.delete(`http://localhost:8000/api/maintenances/${maintenanceId}/`, {
       withCredentials: true,
-      headers: {
-        'X-CSRFToken': getCSRFToken()
-
-      }
+      headers: { 'X-CSRFToken': getCSRFToken() }
     })
     allMaintenances.value = allMaintenances.value.filter(m => m.id !== maintenanceId)
   } catch (e) {
@@ -40,12 +38,14 @@ async function handleDelete(maintenanceId: number) {
 function loadMore() {
   if (visibleCount.value >= allMaintenances.value.length) {
     noMore.value = true
-    setTimeout(() => {
-      noMore.value = false
-    }, 2000)
+    setTimeout(() => { noMore.value = false }, 2000)
     return
   }
   visibleCount.value += 20
+}
+
+function onCardUpdated(updated: any) {
+  allMaintenances.value = allMaintenances.value.map(m => m.id === updated.id ? { ...m, ...updated } : m)
 }
 
 onMounted(fetchMaintenances)
@@ -57,29 +57,22 @@ onMounted(fetchMaintenances)
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="allMaintenances.length === 0 && !loading">Nenhuma manutenção encontrada.</div>
     <div>
-      <div
+      <MaintenanceCard
         v-for="(maintenance, idx) in allMaintenances.slice(0, visibleCount)"
         :key="maintenance.id || idx"
-        class="maintenance-card"
-      >
-        <button
-          class="delete-btn"
-          type="button"
-          aria-label="Excluir manutenção"
-          @click="handleDelete(maintenance.id)"
-        >
-          &times;
-        </button>
-        <h2>Trem: {{ maintenance.train_number || maintenance.train?.number || maintenance.train }}</h2>
-        <p><strong>Motivo:</strong> {{ maintenance.reason_description || maintenance.reason?.description || maintenance.reason }}</p>
-        <p><strong>Data:</strong> {{ maintenance.date }}</p>
-        <p v-if="maintenance.notes"><strong>Notas:</strong> {{ maintenance.notes }}</p>
-      </div>
+        :card-id="maintenance.id"
+        :train="maintenance.train_number || maintenance.train?.number || maintenance.train"
+        :reason="maintenance.reason || maintenance.reason_id"
+        :reason_description="maintenance.reason_description || maintenance.reason?.description || maintenance.reason"
+        :date="maintenance.date"
+        :notes="maintenance.notes"
+        :onDelete="() => handleDelete(maintenance.id)"
+        @updated="onCardUpdated"
+        @error="msg => error = msg"
+      />
     </div>
-    <button
-      class="load-more"
-      @click="loadMore"
-    >
+
+    <button class="load-more" @click="loadMore" v-if="allMaintenances.length > visibleCount">
       Ver mais
     </button>
   </div>
@@ -106,49 +99,6 @@ h1 {
   text-align: center;
 }
 
-.maintenance-card {
-  background: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.04);
-  padding: 1rem 1.2rem;
-  margin-bottom: 1rem;
-  position: relative;
-}
-
-.delete-btn {
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
-  background: transparent;
-  border: none;
-  color: #b00020;
-  font-size: 1.4rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0.1rem 0.5rem;
-  border-radius: 50%;
-  transition: background 0.15s;
-  z-index: 2;
-  line-height: 1;
-}
-.delete-btn:hover,
-.delete-btn:focus {
-  background: #fbeaec;
-  outline: none;
-}
-
-.maintenance-card h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-}
-
-.maintenance-card p {
-  font-size: 1rem;
-  margin-bottom: 0.2rem;
-  color: #222;
-}
-
 .load-more {
   width: 100%;
   padding: 0.8rem 0;
@@ -162,10 +112,7 @@ h1 {
   transition: background 0.2s;
   margin-top: 1rem;
 }
-
-.load-more:hover {
-  background: #cccccc;
-}
+.load-more:hover { background: #cccccc; }
 
 .error {
   color: #b00020;
@@ -174,11 +121,5 @@ h1 {
   padding: 0.5rem 0.8rem;
   font-size: 0.98rem;
   text-align: center;
-}
-
-.loading {
-  text-align: center;
-  color: #888;
-  font-size: 1rem;
 }
 </style>

@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { getCSRFToken } from '../stores/auth'
+import InspectionCard from '../components/InspectionCard.vue'
+
 const allInspections = ref<any[]>([])
 const visibleCount = ref(10)
 const loading = ref(false)
@@ -12,22 +14,21 @@ async function fetchInspections() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8000/api/inspections/',{ withCredentials: true })
+    const res = await axios.get('http://localhost:8000/api/inspections/', { withCredentials: true })
     allInspections.value = (res.data.results || res.data).slice().reverse()
   } catch (e) {
     error.value = 'Erro ao carregar inspeções.'
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
 async function handleDelete(inspectionId: number) {
   try {
-   await axios.delete(`http://localhost:8000/api/inspections/${inspectionId}/`, {
-  withCredentials: true,
-  headers: {
-    'X-CSRFToken': getCSRFToken()
-  }
-})
+    await axios.delete(`http://localhost:8000/api/inspections/${inspectionId}/`, {
+      withCredentials: true,
+      headers: { 'X-CSRFToken': getCSRFToken() }
+    })
     allInspections.value = allInspections.value.filter(i => i.id !== inspectionId)
   } catch (e) {
     error.value = 'Erro ao excluir inspeção.'
@@ -37,12 +38,14 @@ async function handleDelete(inspectionId: number) {
 function loadMore() {
   if (visibleCount.value >= allInspections.value.length) {
     noMore.value = true
-    setTimeout(() => {
-      noMore.value = false
-    }, 2000)
+    setTimeout(() => { noMore.value = false }, 2000)
     return
   }
   visibleCount.value += 20
+}
+
+function onCardUpdated(updated: any) {
+  allInspections.value = allInspections.value.map(i => i.id === updated.id ? { ...i, ...updated } : i)
 }
 
 onMounted(fetchInspections)
@@ -54,29 +57,21 @@ onMounted(fetchInspections)
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="allInspections.length === 0 && !loading">Nenhuma inspeção encontrada.</div>
     <div>
-      <div
+      <InspectionCard
         v-for="(inspection, idx) in allInspections.slice(0, visibleCount)"
         :key="inspection.id || idx"
-        class="inspection-card"
-      >
-        <button
-          class="delete-btn"
-          type="button"
-          aria-label="Excluir inspeção"
-          @click="handleDelete(inspection.id)"
-        >
-          &times;
-        </button>
-        <h2>Trem: {{ inspection.train_number || inspection.train?.number || inspection.train }}</h2>
-        <p><strong>Motivo:</strong> {{ inspection.reason_description || inspection.reason?.description || inspection.reason }}</p>
-        <p><strong>Data:</strong> {{ inspection.date }}</p>
-        <p v-if="inspection.notes"><strong>Notas:</strong> {{ inspection.notes }}</p>
-      </div>
+        :card-id="inspection.id"
+        :train="inspection.train_number || inspection.train?.number || inspection.train"
+        :reason_description="inspection.reason_description || inspection.reason?.description || inspection.reason"
+        :date="inspection.date"
+        :notes="inspection.notes"
+        :onDelete="() => handleDelete(inspection.id)"
+        @updated="onCardUpdated"
+        @error="msg => error = msg"
+      />
     </div>
-    <button
-      class="load-more"
-      @click="loadMore"
-    >
+
+    <button class="load-more" @click="loadMore" v-if="allInspections.length > visibleCount">
       Ver mais
     </button>
   </div>
@@ -103,49 +98,6 @@ h1 {
   text-align: center;
 }
 
-.inspection-card {
-  background: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.04);
-  padding: 1rem 1.2rem;
-  margin-bottom: 1rem;
-  position: relative;
-}
-
-.delete-btn {
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
-  background: transparent;
-  border: none;
-  color: #b00020;
-  font-size: 1.4rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0.1rem 0.5rem;
-  border-radius: 50%;
-  transition: background 0.15s;
-  z-index: 2;
-  line-height: 1;
-}
-.delete-btn:hover,
-.delete-btn:focus {
-  background: #fbeaec;
-  outline: none;
-}
-
-.inspection-card h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-}
-
-.inspection-card p {
-  font-size: 1rem;
-  margin-bottom: 0.2rem;
-  color: #222;
-}
-
 .load-more {
   width: 100%;
   padding: 0.8rem 0;
@@ -159,10 +111,7 @@ h1 {
   transition: background 0.2s;
   margin-top: 1rem;
 }
-
-.load-more:hover {
-  background: #cccccc;
-}
+.load-more:hover { background: #cccccc; }
 
 .error {
   color: #b00020;
@@ -173,9 +122,7 @@ h1 {
   text-align: center;
 }
 
-.loading {
-  text-align: center;
-  color: #888;
-  font-size: 1rem;
+@media (max-width: 700px) {
+  .inspections-board { padding: 1rem; }
 }
 </style>

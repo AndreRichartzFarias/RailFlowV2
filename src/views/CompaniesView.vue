@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { getCSRFToken } from '../stores/auth'
+import CompanyCard from '../components/CompanyCard.vue'
+
 const allCompanies = ref<any[]>([])
 const visibleCount = ref(10)
 const loading = ref(false)
@@ -12,22 +14,20 @@ async function fetchCompanies() {
   loading.value = true
   error.value = ''
   try {
-    const res = await axios.get('http://localhost:8000/api/companies/', {withCredentials: true})
+    const res = await axios.get('http://localhost:8000/api/companies/', { withCredentials: true })
     allCompanies.value = (res.data.results || res.data).slice().reverse()
   } catch (e) {
     error.value = 'Erro ao carregar empresas.'
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
 async function handleDelete(companyId: number) {
   try {
     await axios.delete(`http://localhost:8000/api/companies/${companyId}/`, {
-      
       withCredentials: true,
-      headers: {
-        'X-CSRFTOKEN': getCSRFToken(),
-      }
+      headers: { 'X-CSRFToken': getCSRFToken() }
     })
     allCompanies.value = allCompanies.value.filter(c => c.id !== companyId)
   } catch (e) {
@@ -38,12 +38,14 @@ async function handleDelete(companyId: number) {
 function loadMore() {
   if (visibleCount.value >= allCompanies.value.length) {
     noMore.value = true
-    setTimeout(() => {
-      noMore.value = false
-    }, 2000)
+    setTimeout(() => { noMore.value = false }, 2000)
     return
   }
   visibleCount.value += 20
+}
+
+function onCardUpdated(updated: any) {
+  allCompanies.value = allCompanies.value.map(c => c.id === updated.id ? { ...c, ...updated } : c)
 }
 
 onMounted(fetchCompanies)
@@ -55,31 +57,22 @@ onMounted(fetchCompanies)
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="allCompanies.length === 0 && !loading">Nenhuma empresa encontrada.</div>
     <div>
-      <div
+      <CompanyCard
         v-for="(company, idx) in allCompanies.slice(0, visibleCount)"
         :key="company.id || idx"
-        class="company-card"
-      >
-        <button
-          class="delete-btn"
-          type="button"
-          aria-label="Excluir empresa"
-          @click="handleDelete(company.id)"
-        >
-          &times;
-        </button>
-        <h2>{{ company.name }}</h2>
-        <p><strong>CNPJ:</strong> {{ company.cnpj }}</p>
-        <p><strong>Telefone:</strong> {{ company.phone || '—' }}</p>
-        <p><strong>Email:</strong> {{ company.email || '—' }}</p>
-        <p><strong>Criada em:</strong> {{ company.created_at ? new Date(company.created_at).toLocaleString() : '—' }}</p>
-      </div>
+        :card-id="company.id"
+        :name="company.name"
+        :cnpj="company.cnpj"
+        :phone="company.phone"
+        :email="company.email"
+        :created_at="company.created_at"
+        :onDelete="() => handleDelete(company.id)"
+        @updated="onCardUpdated"
+        @error="msg => error = msg"
+      />
     </div>
-    <button
-      class="load-more"
-      @click="loadMore"
-      v-if="allCompanies.length > visibleCount"
-    >
+
+    <button class="load-more" @click="loadMore" v-if="allCompanies.length > visibleCount">
       Ver mais
     </button>
   </div>
@@ -106,49 +99,6 @@ h1 {
   text-align: center;
 }
 
-.company-card {
-  background: #f5f5f5;
-  border-radius: 8px;
-  box-shadow: 0 1px 8px 0 rgba(0,0,0,0.04);
-  padding: 1rem 1.2rem;
-  margin-bottom: 1rem;
-  position: relative;
-}
-
-.delete-btn {
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
-  background: transparent;
-  border: none;
-  color: #b00020;
-  font-size: 1.4rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0.1rem 0.5rem;
-  border-radius: 50%;
-  transition: background 0.15s;
-  z-index: 2;
-  line-height: 1;
-}
-.delete-btn:hover,
-.delete-btn:focus {
-  background: #fbeaec;
-  outline: none;
-}
-
-.company-card h2 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-}
-
-.company-card p {
-  font-size: 1rem;
-  margin-bottom: 0.2rem;
-  color: #222;
-}
-
 .load-more {
   width: 100%;
   padding: 0.8rem 0;
@@ -162,10 +112,7 @@ h1 {
   transition: background 0.2s;
   margin-top: 1rem;
 }
-
-.load-more:hover {
-  background: #cccccc;
-}
+.load-more:hover { background: #cccccc; }
 
 .error {
   color: #b00020;
