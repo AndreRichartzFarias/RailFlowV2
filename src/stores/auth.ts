@@ -1,140 +1,87 @@
 import { defineStore } from 'pinia'
-import type { Router } from 'vue-router'
+import { ref } from 'vue'
+import axios from 'axios'
 
-interface User {
-  id?: number
-  email?: string
-  first_name?: string
-  last_name?: string
-  is_staff?: boolean
-  is_active?: boolean
-  [key: string]: unknown
-}
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<any | null>(null)
+  const isAuthenticated = ref(false)
 
-interface AuthState {
-  user: User | null
-  isAuthenticated: boolean
-}
+  function getCookie(name: string) {
+    const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)')
+    return match ? decodeURIComponent(match[2]) : null
+  }
 
-export const useAuthStore = defineStore('auth', {
-  state: (): AuthState => {
-    const storedState = localStorage.getItem('authState')
-    return storedState
-      ? (JSON.parse(storedState) as AuthState)
-      : {
-          user: null,
-          isAuthenticated: false,
-        }
-  },
-  actions: {
-    async setCsrfToken(): Promise<void> {
-      await fetch('http://localhost:8000/api/set-csrf-token', {
-        method: 'GET',
-        credentials: 'include',
-      })
-    },
+  function getCSRFToken() {
+    return getCookie('csrftoken')
+  }
 
-    async login(email: string, password: string, router: Router | null = null): Promise<void> {
-      const response = await fetch('http://localhost:8000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCSRFToken(),
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
-      })
-
-      const data: { success?: boolean } = await response.json()
-      if (data.success) {
-        await this.fetchUser() // fetch user info after login
-        this.isAuthenticated = true
-        this.saveState()
-        if (router) {
-          await router.push({ name: 'home' })
-        }
-      } else {
-        this.user = null
-        this.isAuthenticated = false
-        this.saveState()
-      }
-    },
-
-    async logout(router: Router | null = null): Promise<void> {
-      try {
-        const response = await fetch('http://localhost:8000/api/logout', {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': getCSRFToken(),
-          },
-          credentials: 'include',
-        })
-        if (response.ok) {
-          this.user = null
-          this.isAuthenticated = false
-          this.saveState()
-          if (router) {
-            await router.push({ name: 'login' })
-          }
-        }
-      } catch (error) {
-        console.error('Logout failed', error)
-        throw error
-      }
-    },
-
-    async fetchUser(): Promise<void> {
-      try {
-        const response = await fetch('http://localhost:8000/api/user', {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken(),
-          },
-        })
-        if (response.ok) {
-          const data: User = await response.json()
-          this.user = data
-          this.isAuthenticated = true
-        } else {
-          this.user = null
-          this.isAuthenticated = false
-        }
-      } catch (error) {
-        console.error('Failed to fetch user', error)
-        this.user = null
-        this.isAuthenticated = false
-      }
-      this.saveState()
-    },
-
-    saveState(): void {
-      localStorage.setItem(
-        'authState',
-        JSON.stringify({
-          user: this.user,
-          isAuthenticated: this.isAuthenticated,
-        }),
-      )
-    },
-  },
-})
-
-export function getCSRFToken(): string {
-  const name = 'csrftoken'
-  let cookieValue: string | null = null
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';')
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim()
-      if (cookie.substring(0, name.length + 1) === name + '=') {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
-        break
-      }
+  async function ensureCSRFCookie() {
+    try {
+      // call backend endpoint that sets csrftoken cookie
+      await fetch('http://localhost:8000/api/csrf/', { method: 'GET', credentials: 'include' })
+      return true
+    } catch (e) {
+      console.warn('ensureCSRFCookie failed', e)
+      return false
     }
   }
-  if (cookieValue === null) {
-    throw new Error('Missing CSRF cookie.')
+
+  async function fetchUser() {
+    try {
+      await ensureCSRFCookie()
+      const res = await axios.get('http://localhost:8000/api/me/', { withCredentials: true })
+      user.value = res.data || null
+      isAuthenticated.value = !!res.data
+      return user.value
+    } catch (e) {
+      user.value = null
+      isAuthenticated.value = false
+      throw e
+    }
   }
-  return cookieValue
+
+  async function login(email: string, password: string, router?: any) {
+    try {
+      await ensureCSRFCookie()
+      const csrf = getCSRFToken() || ''
+      await axios.post('http://localhost:8000/api/login/', { email, password }, {
+        withCredentials: true,
+        headers: { 'X-CSRFToken': csrf }
+      })
+      await fetchUser()
+      if (router) router.push('/')
+      return true
+    } catch (e) {
+      throw e
+    }
+  }
+
+  async function logout() {
+    try {
+      const csrf = getCSRFToken() || ''
+      await axios.post('http://localhost:8000/api/logout/', {}, { withCredentials: true, headers: { 'X-CSRFToken': csrf } })
+    } catch (e) {
+      console.warn('logout request failed', e)
+    }
+    user.value = null
+    isAuthenticated.value = false
+  }
+
+  return { user, isAuthenticated, getCSRFToken, ensureCSRFCookie, fetchUser, login, logout }
+})
+
+// Named helpers (for modules that import them directly)
+export function getCSRFToken() {
+  const match = document.cookie.match('(^|;)\\s*' + 'csrftoken' + '\\s*=\\s*([^;]+)')
+  return match ? decodeURIComponent(match[2]) : null
+}
+
+export async function ensureCSRFCookie() {
+  try {
+    await fetch('http://localhost:8000/api/csrf/', { method: 'GET', credentials: 'include' })
+    return true
+  } catch (e) {
+    console.warn('ensureCSRFCookie failed', e)
+    return false
+  }
 }

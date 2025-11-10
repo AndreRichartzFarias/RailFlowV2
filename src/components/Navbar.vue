@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { userInGroups, DEFAULT_ALLOWED_GROUPS } from '@/utils/permissions'
 
 const inserirOpen = ref(false)
 const gestaoOpen = ref(false)
@@ -31,6 +33,13 @@ function closeDropdown(dropdown: 'inserir' | 'gestao') {
   if (dropdown === 'inserir') inserirOpen.value = false
   if (dropdown === 'gestao') gestaoOpen.value = false
 }
+
+const auth = useAuthStore()
+const user = computed(() => auth.user)
+const isAuthenticated = computed(() => auth.isAuthenticated)
+const isAllowed = computed(() => userInGroups(user.value, DEFAULT_ALLOWED_GROUPS))
+
+function logout() { auth.logout() }
 </script>
 
 <template>
@@ -111,7 +120,12 @@ function closeDropdown(dropdown: 'inserir' | 'gestao') {
       </div>
     </div>
     <div class="right">
-      <RouterLink to="/login" class="nav-item">LOGIN</RouterLink>
+      <RouterLink to="/login" class="nav-item" v-if="!isAuthenticated">LOGIN</RouterLink>
+      <div v-else class="nav-user">
+        <span class="nav-item">{{ user?.email || user?.username }}</span>
+        <button @click="logout" class="nav-item">Sair</button>
+      </div>
+      <RouterLink v-if="isAllowed" to="/profile" class="nav-item">Perfil</RouterLink>
     </div>
   </nav>
 </template>

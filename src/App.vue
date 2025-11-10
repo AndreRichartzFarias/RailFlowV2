@@ -14,6 +14,10 @@ body {
   background-color: var(--gray-bg);
 }
 
+.nav-home {
+  background: #263449;
+}
+
 .nav-home .nav-item {
   color: #f0f4fa !important;
 }

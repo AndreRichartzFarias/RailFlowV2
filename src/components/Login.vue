@@ -1,30 +1,36 @@
-<script>
-import { useAuthStore } from '../stores/auth'
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
-export default {
-  setup() {
-    const authStore = useAuthStore()
-    return {
-      authStore
+const router = useRouter()
+const auth = useAuthStore()
+
+const email = ref('')
+const password = ref('')
+const error = ref('')
+const loading = ref(false)
+
+async function login() {
+  error.value = ''
+  loading.value = true
+  try {
+    await auth.login(email.value, password.value, router)
+    // auth.login should fetch user and redirect; otherwise navigate
+    if (auth.isAuthenticated) {
+      router.push('/')
     }
-  },
-  data() {
-    return {
-      email: "",
-      password: "",
-      error: ""
+  } catch (e) {
+    console.error('Login error', e)
+    if (e?.response?.data) {
+      error.value = e.response.data.detail || JSON.stringify(e.response.data)
+    } else if (e?.message) {
+      error.value = e.message
+    } else {
+      error.value = 'Erro ao efetuar login.'
     }
-  },
-  methods: {
-    async login() {
-      await this.authStore.login(this.email, this.password, this.$router)
-      if (!this.authStore.isAuthenticated) {
-        this.error = 'Login failed. Please check your credentials.'
-      }
-    },
-    resetError() {
-      this.error = ""
-    }
+  } finally {
+    loading.value = false
   }
 }
 </script>
@@ -35,17 +41,17 @@ export default {
     <form @submit.prevent="login">
       <div>
         <label for="email">Email:</label>
-        <input v-model="email" id="email" type="text" required @input="resetError">
+        <input v-model="email" id="email" type="text" required />
       </div>
       <div>
         <label for="password">Password:</label>
-        <input v-model="password" id="password" type="password" required @input="resetError">
+        <input v-model="password" id="password" type="password" required />
       </div>
-      <button type="submit">Login</button>
+      <button type="submit" :disabled="loading">{{ loading ? 'Entrando...' : 'Login' }}</button>
     </form>
     <p v-if="error" class="error">{{ error }}</p>
-         <div class="right">
-        <RouterLink to="/register" class="nav-item">REGISTER</RouterLink>
+    <div class="right">
+      <RouterLink to="/register" class="nav-item">REGISTER</RouterLink>
     </div>
   </div>
 </template>
@@ -116,6 +122,12 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   background: #cccccc;
+}
+
+button[type="submit"]:disabled {
+  background: #f0f0f0;
+  color: #888;
+  cursor: not-allowed;
 }
 
 .error {

@@ -1,6 +1,6 @@
 <template>
   <teleport to="body">
-    <div class="rc-backdrop" @click.self="$emit('cancel')" role="presentation">
+    <div class="rc-backdrop">
       <div class="route-creator" role="dialog" aria-label="Criar rota" aria-modal="true">
         <div class="rc-header">
           <strong>Criando Nova Rota</strong>
@@ -56,13 +56,11 @@ function finish() {
 }
 </script>
 
-
-
 <style scoped>
+/* Backdrop is transparent and non-blocking so map remains clickable */
 .rc-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -70,10 +68,13 @@ function finish() {
   box-sizing: border-box;
   z-index: 120000;
   overflow: auto;
+  pointer-events: none; /* allow clicks to pass through */
+  background: transparent; /* remove dark overlay */
 }
 
-/* Modal card */
+/* Modal card - must accept pointer events */
 .route-creator {
+  pointer-events: auto; /* make modal interactive while backdrop is non-blocking */
   width: 360px;
   max-width: calc(100% - 40px);
   margin-top: 60px;
